@@ -13,7 +13,6 @@ import pyttsx3
 
 GITHUB_RAW_URL = "https://githubusercontent.com"
 
-# --- FIXED: Dynamic Path Resolution for PyInstaller ---
 def get_asset_path(filename):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, filename)
@@ -129,7 +128,6 @@ class MubeenEngineBridge:
         self.tts = pyttsx3.init()
         self.tts.setProperty('rate', 175)
         self.recognizer = sr.Recognizer()
-        self.recognizer.dynamic_energy_threshold = True
 
     def speak(self, text):
         if self.ui:
@@ -187,7 +185,6 @@ def auto_update_worker(ui):
             time.sleep(60)
             local_file_path = get_asset_path("main.py")
             if not os.path.exists(local_file_path):
-                # Write an initial placeholder if main.py is missing inside temporary sandbox
                 with open(local_file_path, "w", encoding="utf-8") as f:
                     f.write("")
                     
@@ -221,15 +218,10 @@ def start_network_bridge(bridge):
         pass
 
 def local_voice_loop(bridge):
-    try:
-        with sr.Microphone() as source:
-            bridge.recognizer.adjust_for_ambient_noise(source, duration=0.5)
-    except:
-        pass
-
     time.sleep(1.5)
     bridge.speak("Mubeen A.I. stands ready.")
     
+    # Clean API connection using speech_recognition cloud endpoints seamlessly
     while True:
         try:
             with sr.Microphone() as source:
@@ -240,3 +232,13 @@ def local_voice_loop(bridge):
                 if "mubeen" in phrase:
                     bridge.listening = True
                     bridge.speak("Yes?")
+                    audio_cmd = bridge.recognizer.listen(source, timeout=6, phrase_time_limit=7)
+                    cmd = bridge.recognizer.recognize_google(audio_cmd)
+                    bridge.run_command(cmd)
+        except:
+            pass
+        time.sleep(0.1)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    bridge = MubeenEngineBridge()
