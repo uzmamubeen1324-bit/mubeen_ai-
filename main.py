@@ -24,41 +24,42 @@ class AnimatedMubeenUI:
         self.bridge = engine_bridge
         self.root.title("Mubeen AI Operator")
         
-        self.root.geometry("320x460+50+50")
+        # Core i3 Optimization: Balanced dimensions to reduce pixel drawing load on Intel UHD 620
+        self.root.geometry("300x440+60+60")
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
         self.root.config(bg="#0d1117")
-        self.root.wm_attributes("-alpha", 0.95)
+        self.root.wm_attributes("-alpha", 0.98) # High performance transparency setting
         
-        self.title_bar = tk.Frame(self.root, bg="#161b22", relief="raised", height=30)
+        self.title_bar = tk.Frame(self.root, bg="#161b22", height=30)
         self.title_bar.pack(side="top", fill="x")
         self.title_bar.bind("<Button-1>", self.start_drag)
         self.title_bar.bind("<B1-Motion>", self.drag_window)
         
-        title_label = tk.Label(self.title_bar, text="🤖 MUBEEN AI (GLOBE SYNC)", fg="#58a6ff", bg="#161b22", font=("Consolas", 10, "bold"))
+        title_label = tk.Label(self.title_bar, text="🤖 MUBEEN AI (LIGHTWEGHT)", fg="#58a6ff", bg="#161b22", font=("Consolas", 10, "bold"))
         title_label.pack(side="left", padx=10)
         
         close_btn = tk.Button(self.title_bar, text="×", fg="#f85149", bg="#161b22", borderwidth=0, font=("Arial", 12, "bold"), command=self.root.quit)
         close_btn.pack(side="right", padx=10)
 
-        self.canvas = tk.Canvas(self.root, width=300, height=340, bg="#0d1117", highlightthickness=0)
+        self.canvas = tk.Canvas(self.root, width=280, height=320, bg="#0d1117", highlightthickness=0)
         self.canvas.pack(pady=10)
         
-        self.bot_glow = self.canvas.create_oval(70, 20, 230, 180, fill="", outline="#1f6feb", width=2)
-        self.bot_head = self.canvas.create_oval(80, 30, 220, 170, fill="#161b22", outline="#58a6ff", width=4)
-        self.eye_left = self.canvas.create_oval(110, 80, 135, 105, fill="#58a6ff", outline="")
-        self.eye_right = self.canvas.create_oval(165, 80, 190, 105, fill="#58a6ff", outline="")
-        self.visor_line = self.canvas.create_line(120, 130, 180, 130, fill="#58a6ff", width=3)
+        self.bot_glow = self.canvas.create_oval(65, 20, 215, 170, fill="", outline="#1f6feb", width=2)
+        self.bot_head = self.canvas.create_oval(75, 30, 205, 160, fill="#161b22", outline="#58a6ff", width=3)
+        self.eye_left = self.canvas.create_oval(105, 75, 125, 95, fill="#58a6ff", outline="")
+        self.eye_right = self.canvas.create_oval(155, 75, 175, 95, fill="#58a6ff", outline="")
+        self.visor_line = self.canvas.create_line(115, 120, 165, 120, fill="#58a6ff", width=2)
         
-        self.globe_base = self.canvas.create_oval(115, 210, 185, 280, fill="#161b22", outline="#8b949e", width=1, dash=(4,4))
-        self.globe_core = self.canvas.create_oval(125, 220, 175, 270, fill="#0d1117", outline="#58a6ff", width=2)
+        self.globe_base = self.canvas.create_oval(105, 200, 175, 270, fill="#161b22", outline="#8b949e", width=1, dash=(4,4))
+        self.globe_core = self.canvas.create_oval(115, 210, 165, 260, fill="#0d1117", outline="#58a6ff", width=2)
         
         self.wave_bars = []
         for i in range(5):
-            bar = self.canvas.create_line(135 + (i*7), 245, 135 + (i*7), 245, fill="#58a6ff", width=3)
+            bar = self.canvas.create_line(125 + (i*7), 235, 125 + (i*7), 235, fill="#58a6ff", width=3)
             self.wave_bars.append(bar)
             
-        self.status_text = tk.Label(self.root, text="System Online", fg="#8b949e", bg="#0d1117", font=("Consolas", 11))
+        self.status_text = tk.Label(self.root, text="System Active", fg="#8b949e", bg="#0d1117", font=("Consolas", 10))
         self.status_text.pack(pady=5)
         
         self.pulse_dir = 1
@@ -85,12 +86,12 @@ class AnimatedMubeenUI:
     def animate_loop(self):
         try:
             self.pulse_val += self.pulse_dir * 2
-            if self.pulse_val > 20 or self.pulse_val < 0:
+            if self.pulse_val > 16 or self.pulse_val < 0:
                 self.pulse_dir *= -1
                 
-            self.canvas.coords(self.bot_glow, 70 - self.pulse_val//2, 20 - self.pulse_val//2, 230 + self.pulse_val//2, 180 + self.pulse_val//2)
+            self.canvas.coords(self.bot_glow, 65 - self.pulse_val//2, 20 - self.pulse_val//2, 215 + self.pulse_val//2, 170 + self.pulse_val//2)
             
-            if time.time() % 4 < 0.15:
+            if time.time() % 5 < 0.15:
                 self.canvas.itemconfig(self.eye_left, fill="#161b22")
                 self.canvas.itemconfig(self.eye_right, fill="#161b22")
             else:
@@ -103,21 +104,20 @@ class AnimatedMubeenUI:
 
             self.wave_time += 0.4
             if self.bridge.listening:
-                self.canvas.itemconfig(self.globe_core, outline="#238636", width=3)
-                self.canvas.itemconfig(self.globe_base, outline="#238636")
+                self.canvas.itemconfig(self.globe_core, outline="#238636", width=2)
                 for i, bar in enumerate(self.wave_bars):
-                    amplitude = abs(math.sin(self.wave_time + i)) * 18 + 4
-                    self.canvas.coords(bar, 136 + (i*7), 245 - amplitude, 136 + (i*7), 245 + amplitude)
+                    amplitude = abs(math.sin(self.wave_time + i)) * 14 + 3
+                    self.canvas.coords(bar, 126 + (i*7), 235 - amplitude, 126 + (i*7), 235 + amplitude)
                     self.canvas.itemconfig(bar, fill="#34d058")
             else:
-                self.canvas.itemconfig(self.globe_core, outline="#58a6ff", width=2)
-                self.canvas.itemconfig(self.globe_base, outline="#8b949e")
+                self.canvas.itemconfig(self.globe_core, outline="#58a6ff", width=1)
                 for i, bar in enumerate(self.wave_bars):
-                    amplitude = abs(math.sin(self.wave_time * 0.3 + i)) * 4 + 2
-                    self.canvas.coords(bar, 136 + (i*7), 245 - amplitude, 136 + (i*7), 245 + amplitude)
+                    amplitude = abs(math.sin(self.wave_time * 0.2 + i)) * 3 + 2
+                    self.canvas.coords(bar, 126 + (i*7), 235 - amplitude, 126 + (i*7), 235 + amplitude)
                     self.canvas.itemconfig(bar, fill="#58a6ff")
                     
-            self.root.after(50, self.animate_loop)
+            # Core i3 Performance Tweaks: Increased cycle delay to completely release CPU strain
+            self.root.after(75, self.animate_loop)
         except:
             pass
 
@@ -126,7 +126,7 @@ class MubeenEngineBridge:
         self.listening = False
         self.ui = None
         self.tts = pyttsx3.init()
-        self.tts.setProperty('rate', 175)
+        self.tts.setProperty('rate', 170)
         self.recognizer = sr.Recognizer()
 
     def speak(self, text):
@@ -221,7 +221,6 @@ def local_voice_loop(bridge):
     time.sleep(1.5)
     bridge.speak("Mubeen A.I. stands ready.")
     
-    # Clean API connection using speech_recognition cloud endpoints seamlessly
     while True:
         try:
             with sr.Microphone() as source:
