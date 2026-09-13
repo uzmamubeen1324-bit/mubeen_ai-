@@ -13,6 +13,12 @@ import pyttsx3
 
 GITHUB_RAW_URL = "https://githubusercontent.com"
 
+# --- FIXED: Dynamic Path Resolution for PyInstaller ---
+def get_asset_path(filename):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, filename)
+    return os.path.join(os.path.abspath("."), filename)
+
 class AnimatedMubeenUI:
     def __init__(self, root, engine_bridge):
         self.root = root
@@ -179,20 +185,24 @@ def auto_update_worker(ui):
     while True:
         try:
             time.sleep(60)
-            if not sys.argv.endswith(".exe"):
-                continue
+            local_file_path = get_asset_path("main.py")
+            if not os.path.exists(local_file_path):
+                # Write an initial placeholder if main.py is missing inside temporary sandbox
+                with open(local_file_path, "w", encoding="utf-8") as f:
+                    f.write("")
+                    
             with urllib.request.urlopen(GITHUB_RAW_URL) as response:
                 cloud_code = response.read().decode('utf-8')
-            with open("main.py", "r", encoding="utf-8") as local_file:
+            with open(local_file_path, "r", encoding="utf-8") as local_file:
                 local_code = local_file.read()
                 
             if cloud_code.strip() != local_code.strip():
                 ui.update_status("Syncing Update...", "#ffb86c")
-                with open("main.py", "w", encoding="utf-8") as local_file:
+                with open(local_file_path, "w", encoding="utf-8") as local_file:
                     local_file.write(cloud_code)
                 ui.update_status("Restarting...", "#238636")
                 time.sleep(2)
-                os.execv(sys.executable, ['python'] + sys.argv)
+                os.execv(sys.executable, sys.argv)
         except:
             pass
 
@@ -211,33 +221,22 @@ def start_network_bridge(bridge):
         pass
 
 def local_voice_loop(bridge):
-    # Added core thread separation logic to ensure microphone loop never hangs UI rendering
-    time.sleep(2.0)
     try:
         with sr.Microphone() as source:
-            bridge.recognizer.adjust_for_ambient_noise(source, duration=1.0)
+            bridge.recognizer.adjust_for_ambient_noise(source, duration=0.5)
     except:
         pass
 
+    time.sleep(1.5)
+    bridge.speak("Mubeen A.I. stands ready.")
+    
     while True:
         try:
             with sr.Microphone() as source:
                 bridge.listening = False
-                audio = bridge.recognizer.listen(source, timeout=5, phrase_time_limit=4)
+                audio = bridge.recognizer.listen(source, timeout=4, phrase_time_limit=3)
                 phrase = bridge.recognizer.recognize_google(audio).lower()
                 
                 if "mubeen" in phrase:
                     bridge.listening = True
                     bridge.speak("Yes?")
-                    audio_cmd = bridge.recognizer.listen(source, timeout=6, phrase_time_limit=7)
-                    cmd = bridge.recognizer.recognize_google(audio_cmd)
-                    bridge.run_command(cmd)
-        except Exception as e:
-            pass
-        time.sleep(0.2)
-
-if __name__ == "__main__":
-    # Tkinter UI initialized first on primary main thread
-    root = tk.Tk()
-    bridge = MubeenEngineBridge()
-    ui = AnimatedMubeenUI(root, bridge)
