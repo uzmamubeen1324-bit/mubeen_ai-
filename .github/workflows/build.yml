@@ -20,7 +20,8 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller pyautogui opencv-python Pillow pyttsx3 SpeechRecognition pywin32
+        # Installing PyAudio directly for Windows to capture microphone streams cleanly
+        pip install pyaudio pyinstaller pyautogui opencv-python Pillow pyttsx3 SpeechRecognition pywin32
 
     - name: Compile to EXE
       run: |
@@ -52,16 +53,16 @@ jobs:
 
     - name: Generate and Configure Buildozer Spec
       run: |
-        # Generate default spec directly inside the cloud workspace
         buildozer init
-        # Modify the generated spec to ensure clean standalone compilation
         sed -i 's/# android.permissions = INTERNET/android.permissions = INTERNET/' buildozer.spec
         sed -i 's/source.dir = ./source.dir = mobile_app/' buildozer.spec
 
-    - name: Compile to APK
+    - name: Auto-Accept Android Licenses & Compile to APK
       run: |
-        buildozer -v android debug
-
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        yes | buildozer -v android debug
+        
     - name: Upload Android APK Artifact
       uses: actions/upload-artifact@v4
       with:
