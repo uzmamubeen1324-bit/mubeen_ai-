@@ -50,11 +50,13 @@ jobs:
         pip install --upgrade pip
         pip install buildozer cython kivy
 
-    - name: Configure Buildozer
+    - name: Generate and Configure Buildozer Spec
       run: |
+        # Generate default spec directly inside the cloud workspace
         buildozer init
-        # Enable Internet Permission automatically
+        # Modify the generated spec to ensure clean standalone compilation
         sed -i 's/# android.permissions = INTERNET/android.permissions = INTERNET/' buildozer.spec
+        sed -i 's/source.dir = ./source.dir = mobile_app/' buildozer.spec
 
     - name: Compile to APK
       run: |
