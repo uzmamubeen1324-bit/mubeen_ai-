@@ -3,15 +3,16 @@ import sys
 import time
 import socket
 import threading
+import urllib.request
 import tkinter as tk
 from tkinter import ttk
 import pyautogui
 import speech_recognition as sr
 import pyttsx3
 
-# PyAutoGUI Safety configuration
-pyautogui.FAILSAFE = True
-pyautogui.PAUSE = 0.3
+# URL to check for live updates directly from your GitHub repository
+# Replace 'uzmamubeen1324-bit' with your repository details if needed
+GITHUB_RAW_URL = "https://githubusercontent.com"
 
 class AnimatedMubeenUI:
     def __init__(self, root, engine_bridge):
@@ -19,37 +20,33 @@ class AnimatedMubeenUI:
         self.bridge = engine_bridge
         self.root.title("Mubeen AI Operator")
         
-        # UI dimensions and placement
         self.root.geometry("320x420+50+50")
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
         self.root.config(bg="#0d1117")
         self.root.wm_attributes("-alpha", 0.95)
         
-        # Custom Title bar for dragging the robot widget around screen
         self.title_bar = tk.Frame(self.root, bg="#161b22", relief="raised", height=30)
         self.title_bar.pack(side="top", fill="x")
         self.title_bar.bind("<Button-1>", self.start_drag)
         self.title_bar.bind("<B1-Motion>", self.drag_window)
         
-        title_label = tk.Label(self.title_bar, text="🤖 MUBEEN AI", fg="#58a6ff", bg="#161b22", font=("Consolas", 10, "bold"))
+        title_label = tk.Label(self.title_bar, text="🤖 MUBEEN AI (LIVE)", fg="#58a6ff", bg="#161b22", font=("Consolas", 10, "bold"))
         title_label.pack(side="left", padx=10)
         
         close_btn = tk.Button(self.title_bar, text="×", fg="#f85149", bg="#161b22", borderwidth=0, font=("Arial", 12, "bold"), command=self.root.quit)
         close_btn.pack(side="right", padx=10)
 
-        # Interactive Bot Canvas
         self.canvas = tk.Canvas(self.root, width=300, height=280, bg="#0d1117", highlightthickness=0)
         self.canvas.pack(pady=10)
         
-        # Cyber Robot Face Elements
         self.bot_glow = self.canvas.create_oval(70, 50, 230, 210, fill="", outline="#1f6feb", width=2)
         self.bot_head = self.canvas.create_oval(80, 60, 220, 200, fill="#161b22", outline="#58a6ff", width=4)
         self.eye_left = self.canvas.create_oval(110, 110, 135, 135, fill="#58a6ff", outline="")
         self.eye_right = self.canvas.create_oval(165, 110, 190, 135, fill="#58a6ff", outline="")
         self.visor_line = self.canvas.create_line(120, 160, 180, 160, fill="#58a6ff", width=3)
         
-        self.status_text = tk.Label(self.root, text="System Booting...", fg="#8b949e", bg="#0d1117", font=("Consolas", 11))
+        self.status_text = tk.Label(self.root, text="Booting Cloud Matrix...", fg="#8b949e", bg="#0d1117", font=("Consolas", 11))
         self.status_text.pack(pady=5)
         
         self.pulse_dir = 1
@@ -107,7 +104,6 @@ class MubeenEngineBridge:
     def speak(self, text):
         if self.ui:
             self.ui.update_status("Speaking...", "#388bfd")
-        print(f"[Mubeen AI]: {text}")
         try:
             self.tts.say(text)
             self.tts.runAndWait()
@@ -119,7 +115,7 @@ class MubeenEngineBridge:
     def run_command(self, user_intent):
         intent = user_intent.lower()
         if self.ui:
-            self.ui.update_status(f"Running Action...", "#ff7b72")
+            self.ui.update_status("Running Action...", "#ff7b72")
             
         if "photoshop" in intent:
             if "create" in intent or "canvas" in intent:
@@ -153,7 +149,35 @@ class MubeenEngineBridge:
             self.speak("Opening Microsoft Office hub interface.")
             os.system("start ms-officeapp:")
         else:
-            self.speak(f"Automation sequence applied.")
+            self.speak("Automation sequence applied.")
+
+def auto_update_worker(ui):
+    """Background listener that pulls fresh changes from GitHub without reinstalling."""
+    while True:
+        try:
+            time.sleep(60) # Checks for code changes every 60 seconds
+            current_file_path = sys.argv[0]
+            if not current_file_path.endswith(".exe"):
+                continue
+                
+            # Download fresh source string from GitHub
+            with urllib.request.urlopen(GITHUB_RAW_URL) as response:
+                cloud_code = response.read().decode('utf-8')
+                
+            # Read local code state
+            with open("main.py", "r", encoding="utf-8") as local_file:
+                local_code = local_file.read()
+                
+            # If GitHub code is updated, hot-swap the script framework safely
+            if cloud_code.strip() != local_code.strip():
+                ui.update_status("Syncing Update...", "#ffb86c")
+                with open("main.py", "w", encoding="utf-8") as local_file:
+                    local_file.write(cloud_code)
+                ui.update_status("Update Complete! Restarting...", "#238636")
+                time.sleep(2)
+                os.execv(sys.executable, ['python'] + sys.argv)
+        except:
+            pass
 
 def start_network_bridge(bridge):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -170,12 +194,11 @@ def start_network_bridge(bridge):
         pass
 
 def local_voice_loop(bridge):
-    # Safe init block for background mic streams
     try:
         with sr.Microphone() as source:
             bridge.recognizer.adjust_for_ambient_noise(source, duration=0.5)
     except:
-        print("[Warning]: No active microphone detected at initialization.")
+        pass
 
     time.sleep(1.5)
     bridge.speak("Mubeen A.I. stands ready.")
@@ -203,8 +226,8 @@ if __name__ == "__main__":
     ui = AnimatedMubeenUI(root, bridge)
     bridge.ui = ui
     
-    # Asynchronous multi-threading execution
     threading.Thread(target=start_network_bridge, args=(bridge,), daemon=True).start()
     threading.Thread(target=local_voice_loop, args=(bridge,), daemon=True).start()
+    threading.Thread(target=auto_update_worker, args=(ui,), daemon=True).start()
     
     root.mainloop()
