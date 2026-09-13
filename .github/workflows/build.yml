@@ -24,7 +24,8 @@ jobs:
 
     - name: Compile to Stable Production Folder
       run: |
-        pyinstaller --onedir --noconsole --name "MubeenAI" main.py
+        # Re-adding dynamic link layers to prevent hidden execution crashes
+        pyinstaller --onedir --nowindowed --hidden-import=tkinter --hidden-import=pyttsx3.drivers --hidden-import=pyttsx3.drivers.sapi5 --hidden-import=comtypes --name "MubeenAI" main.py
 
     - name: Compress Directory into ZIP Archive
       shell: powershell
@@ -38,35 +39,16 @@ jobs:
         path: dist/MubeenAI-Windows.zip
 
   build-android:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Build Android APK with Official Action
+      uses: ArtemGovorov/buildozer-action@v1
       with:
-        python-version: '3.10'
-
-    - name: Install Buildozer Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libssl-dev cmake libffi-dev libgdbm-dev
-        pip install --upgrade pip
-        pip install buildozer cython kivy
-
-    - name: Generate and Configure Buildozer Spec
-      run: |
-        buildozer init
-        sed -i 's/# android.permissions = INTERNET/android.permissions = INTERNET/' buildozer.spec
-        sed -i 's/source.dir = ./source.dir = mobile_app/' buildozer.spec
-
-    - name: Native Linux Android Compilation
-      run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        export BUILDOZER_ALLOW_ORG_INDEX_URL=1
-        yes | buildozer -v android debug
+        buildozer_version: stable
+        command: buildozer -v android debug
 
     - name: Upload Android APK Artifact
       uses: actions/upload-artifact@v4
