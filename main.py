@@ -4,14 +4,13 @@ import time
 import socket
 import threading
 import urllib.request
+import math
 import tkinter as tk
 from tkinter import ttk
 import pyautogui
 import speech_recognition as sr
 import pyttsx3
 
-# URL to check for live updates directly from your GitHub repository
-# Replace 'uzmamubeen1324-bit' with your repository details if needed
 GITHUB_RAW_URL = "https://githubusercontent.com"
 
 class AnimatedMubeenUI:
@@ -20,37 +19,53 @@ class AnimatedMubeenUI:
         self.bridge = engine_bridge
         self.root.title("Mubeen AI Operator")
         
-        self.root.geometry("320x420+50+50")
+        # Window Canvas Config
+        self.root.geometry("320x460+50+50")
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
         self.root.config(bg="#0d1117")
         self.root.wm_attributes("-alpha", 0.95)
         
+        # Custom Title Bar
         self.title_bar = tk.Frame(self.root, bg="#161b22", relief="raised", height=30)
         self.title_bar.pack(side="top", fill="x")
         self.title_bar.bind("<Button-1>", self.start_drag)
         self.title_bar.bind("<B1-Motion>", self.drag_window)
         
-        title_label = tk.Label(self.title_bar, text="🤖 MUBEEN AI (LIVE)", fg="#58a6ff", bg="#161b22", font=("Consolas", 10, "bold"))
+        title_label = tk.Label(self.title_bar, text="🤖 MUBEEN AI (GLOBE SYNC)", fg="#58a6ff", bg="#161b22", font=("Consolas", 10, "bold"))
         title_label.pack(side="left", padx=10)
         
         close_btn = tk.Button(self.title_bar, text="×", fg="#f85149", bg="#161b22", borderwidth=0, font=("Arial", 12, "bold"), command=self.root.quit)
         close_btn.pack(side="right", padx=10)
 
-        self.canvas = tk.Canvas(self.root, width=300, height=280, bg="#0d1117", highlightthickness=0)
+        # Main Interface Canvas
+        self.canvas = tk.Canvas(self.root, width=300, height=340, bg="#0d1117", highlightthickness=0)
         self.canvas.pack(pady=10)
         
-        self.bot_glow = self.canvas.create_oval(70, 50, 230, 210, fill="", outline="#1f6feb", width=2)
-        self.bot_head = self.canvas.create_oval(80, 60, 220, 200, fill="#161b22", outline="#58a6ff", width=4)
-        self.eye_left = self.canvas.create_oval(110, 110, 135, 135, fill="#58a6ff", outline="")
-        self.eye_right = self.canvas.create_oval(165, 110, 190, 135, fill="#58a6ff", outline="")
-        self.visor_line = self.canvas.create_line(120, 160, 180, 160, fill="#58a6ff", width=3)
+        # Cyber Robot face structures
+        self.bot_glow = self.canvas.create_oval(70, 20, 230, 180, fill="", outline="#1f6feb", width=2)
+        self.bot_head = self.canvas.create_oval(80, 30, 220, 170, fill="#161b22", outline="#58a6ff", width=4)
+        self.eye_left = self.canvas.create_oval(110, 80, 135, 105, fill="#58a6ff", outline="")
+        self.eye_right = self.canvas.create_oval(165, 80, 190, 105, fill="#58a6ff", outline="")
+        self.visor_line = self.canvas.create_line(120, 130, 180, 130, fill="#58a6ff", width=3)
         
-        self.status_text = tk.Label(self.root, text="Booting Cloud Matrix...", fg="#8b949e", bg="#0d1117", font=("Consolas", 11))
+        # --- NEW FEAT: CYBER VOICE TYPE GLOBE ICON ---
+        # Base Audio Globe Circle Base (Hologram Outer Shell)
+        self.globe_base = self.canvas.create_oval(115, 210, 185, 280, fill="#161b22", outline="#8b949e", width=1, dash=(4,4))
+        self.globe_core = self.canvas.create_oval(125, 220, 175, 270, fill="#0d1117", outline="#58a6ff", width=2)
+        
+        # Audio Wave Bars inside the Voice Globe Ring
+        self.wave_bars = []
+        for i in range(5):
+            bar = self.canvas.create_line(135 + (i*7), 245, 135 + (i*7), 245, fill="#58a6ff", width=3)
+            self.wave_bars.append(bar)
+            
+        self.status_text = tk.Label(self.root, text="System Online", fg="#8b949e", bg="#0d1117", font=("Consolas", 11))
         self.status_text.pack(pady=5)
         
         self.pulse_dir = 1
         self.pulse_val = 0
+        self.wave_time = 0
         self._x = 0
         self._y = 0
         self.animate_loop()
@@ -75,8 +90,9 @@ class AnimatedMubeenUI:
             if self.pulse_val > 20 or self.pulse_val < 0:
                 self.pulse_dir *= -1
                 
-            self.canvas.coords(self.bot_glow, 70 - self.pulse_val//2, 50 - self.pulse_val//2, 230 + self.pulse_val//2, 210 + self.pulse_val//2)
+            self.canvas.coords(self.bot_glow, 70 - self.pulse_val//2, 20 - self.pulse_val//2, 230 + self.pulse_val//2, 180 + self.pulse_val//2)
             
+            # Simulated blinking loop
             if time.time() % 4 < 0.15:
                 self.canvas.itemconfig(self.eye_left, fill="#161b22")
                 self.canvas.itemconfig(self.eye_right, fill="#161b22")
@@ -87,8 +103,27 @@ class AnimatedMubeenUI:
                 else:
                     self.canvas.itemconfig(self.eye_left, fill="#58a6ff")
                     self.canvas.itemconfig(self.eye_right, fill="#58a6ff")
+
+            # --- DYNAMIC VOICE GLOBE WAVE ANIMATION ---
+            self.wave_time += 0.4
+            if self.bridge.listening:
+                # Active Animation: Globe expands and audio frequencies bounce violently
+                self.canvas.itemconfig(self.globe_core, outline="#238636", width=3)
+                self.canvas.itemconfig(self.globe_base, outline="#238636")
+                for i, bar in enumerate(self.wave_bars):
+                    amplitude = abs(math.sin(self.wave_time + i)) * 18 + 4
+                    self.canvas.coords(bar, 136 + (i*7), 245 - amplitude, 136 + (i*7), 245 + amplitude)
+                    self.canvas.itemconfig(bar, fill="#34d058")
+            else:
+                # Standby State: Wave node drops to micro pulsations
+                self.canvas.itemconfig(self.globe_core, outline="#58a6ff", width=2)
+                self.canvas.itemconfig(self.globe_base, outline="#8b949e")
+                for i, bar in enumerate(self.wave_bars):
+                    amplitude = abs(math.sin(self.wave_time * 0.3 + i)) * 4 + 2
+                    self.canvas.coords(bar, 136 + (i*7), 245 - amplitude, 136 + (i*7), 245 + amplitude)
+                    self.canvas.itemconfig(bar, fill="#58a6ff")
                     
-            self.root.after(60, self.animate_loop)
+            self.root.after(50, self.animate_loop)
         except:
             pass
 
@@ -152,28 +187,21 @@ class MubeenEngineBridge:
             self.speak("Automation sequence applied.")
 
 def auto_update_worker(ui):
-    """Background listener that pulls fresh changes from GitHub without reinstalling."""
     while True:
         try:
-            time.sleep(60) # Checks for code changes every 60 seconds
-            current_file_path = sys.argv[0]
-            if not current_file_path.endswith(".exe"):
+            time.sleep(60)
+            if not sys.argv[0].endswith(".exe"):
                 continue
-                
-            # Download fresh source string from GitHub
             with urllib.request.urlopen(GITHUB_RAW_URL) as response:
                 cloud_code = response.read().decode('utf-8')
-                
-            # Read local code state
             with open("main.py", "r", encoding="utf-8") as local_file:
                 local_code = local_file.read()
                 
-            # If GitHub code is updated, hot-swap the script framework safely
             if cloud_code.strip() != local_code.strip():
                 ui.update_status("Syncing Update...", "#ffb86c")
                 with open("main.py", "w", encoding="utf-8") as local_file:
                     local_file.write(cloud_code)
-                ui.update_status("Update Complete! Restarting...", "#238636")
+                ui.update_status("Restarting...", "#238636")
                 time.sleep(2)
                 os.execv(sys.executable, ['python'] + sys.argv)
         except:
@@ -212,22 +240,3 @@ def local_voice_loop(bridge):
                 
                 if "mubeen" in phrase:
                     bridge.listening = True
-                    bridge.speak("Yes?")
-                    audio_cmd = bridge.recognizer.listen(source, timeout=6, phrase_time_limit=7)
-                    cmd = bridge.recognizer.recognize_google(audio_cmd)
-                    bridge.run_command(cmd)
-        except:
-            pass
-        time.sleep(0.1)
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    bridge = MubeenEngineBridge()
-    ui = AnimatedMubeenUI(root, bridge)
-    bridge.ui = ui
-    
-    threading.Thread(target=start_network_bridge, args=(bridge,), daemon=True).start()
-    threading.Thread(target=local_voice_loop, args=(bridge,), daemon=True).start()
-    threading.Thread(target=auto_update_worker, args=(ui,), daemon=True).start()
-    
-    root.mainloop()
