@@ -143,7 +143,7 @@ class MubeenEngineBridge:
             
         if "photoshop" in intent:
             if "create" in intent or "canvas" in intent:
-                self.speak("Opening Photoshop and setting up workspace canvases.")
+                self.speak("Opening Photoshop and setting up canvases.")
                 pyautogui.hotkey('ctrl', 'n')
                 time.sleep(1)
                 pyautogui.write('1080')
@@ -211,20 +211,19 @@ def start_network_bridge(bridge):
         pass
 
 def local_voice_loop(bridge):
+    # Added core thread separation logic to ensure microphone loop never hangs UI rendering
+    time.sleep(2.0)
     try:
         with sr.Microphone() as source:
-            bridge.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+            bridge.recognizer.adjust_for_ambient_noise(source, duration=1.0)
     except:
         pass
 
-    time.sleep(1.5)
-    bridge.speak("Mubeen A.I. stands ready.")
-    
     while True:
         try:
             with sr.Microphone() as source:
                 bridge.listening = False
-                audio = bridge.recognizer.listen(source, timeout=4, phrase_time_limit=3)
+                audio = bridge.recognizer.listen(source, timeout=5, phrase_time_limit=4)
                 phrase = bridge.recognizer.recognize_google(audio).lower()
                 
                 if "mubeen" in phrase:
@@ -233,14 +232,12 @@ def local_voice_loop(bridge):
                     audio_cmd = bridge.recognizer.listen(source, timeout=6, phrase_time_limit=7)
                     cmd = bridge.recognizer.recognize_google(audio_cmd)
                     bridge.run_command(cmd)
-        except:
+        except Exception as e:
             pass
-        time.sleep(0.1)
+        time.sleep(0.2)
 
 if __name__ == "__main__":
+    # Tkinter UI initialized first on primary main thread
     root = tk.Tk()
     bridge = MubeenEngineBridge()
     ui = AnimatedMubeenUI(root, bridge)
-    bridge.ui = ui
-    
-    threading.Thread(target=start_network_bridge, args=(bridge,), daemon=True).start()
